@@ -1,32 +1,37 @@
 <template>
-  <div id="app">
-    <div id="nav">
-      <router-link to="/">Home</router-link> |
-      <router-link to="/about">About</router-link>
-    </div>
-    <router-view/>
-  </div>
+	<div class="container">
+		<Header />
+		<transition name="slide-fade" mode="out-in">
+			<router-view class="router-wrapper"/>
+		</transition>
+		<Footer />
+	</div>
 </template>
 
-<style lang="scss">
-#app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
+<script>
+import Header from './components/Header.vue'
+import Footer from './components/Footer.vue'
+
+export default {
+	name: 'App',
+	components: { Header, Footer },
+	created() {
+		
+	}
 }
+</script>
 
-#nav {
-  padding: 30px;
-
-  a {
-    font-weight: bold;
-    color: #2c3e50;
-
-    &.router-link-exact-active {
-      color: #42b983;
-    }
-  }
+<style lang="scss" scoped>
+.container {
+	margin: auto;
+	height: 100vh;
+	overflow: hidden;
+	@include flex;
+	@include flexCol;
+	.router-wrapper {
+		flex-grow: 1;
+		border-left: 1px solid $colorLighter;
+		border-right: 1px solid $colorLighter;
+	}
 }
 </style>
