@@ -1,11 +1,14 @@
 <template>
 	<div class="daily-wrapper">
-		<h2 class="title-wrap">
-			날씨정보 <span>{{ cityName }}</span>
-		</h2>
+		<Title class="title-wrap" :title="title" />
+		<Date :date="date" />
 		<b-form-select class="city-select" v-model="selected" :options="options" size="lg" />
-		<div>
-			<button class="btn btn-primary" @click="onClick">현재위치의 날씨 정보 확인</button>
+		<b-button variant="dark" @click="onClick">현재위치의 날씨 정보 확인</b-button>
+		<div class="daily-wrap">
+			<Icon class="icon-wrap" :icon="icon" />
+			<Temp class="temp-wrap" :temp="temp" />
+			<Info class="desc-wrap" :main="main" :description="description" />
+			<Wind class="wind-wrap" :wind="wind" :key="GET_DAILY.dt" />
 		</div>
 	</div>
 </template>
@@ -13,9 +16,18 @@
 <script>
 import { mapGetters } from 'vuex'
 import axios from 'axios'
+import { getValue } from '../modules/utils'
+
+import Title from '../components/Title.vue'
+import Icon from '../components/Icon.vue'
+import Temp from '../components/Temp.vue'
+import Date from '../components/Date.vue'
+import Info from '../components/Info.vue'
+import Wind from '../components/Wind.vue'
 
 export default {
 	name: 'Daily',
+	components: { Title, Icon, Temp, Date, Info, Wind },
 	data() {
 		// 현재 컴포넌트에서 쓰일 변수를 등록하는 곳
 		return {
@@ -31,7 +43,7 @@ export default {
 			const city = []
 			this.city.forEach( (v, i) => {
 				let isCity = v.lat && v.lon
-				if(i == 0) city.push({ text: '날씨를 알고 싶은 도시를 선택하세요.', value: '', disabled: true })
+				if(i == 0) city.push({ text: '도시를 선택하세요.', value: '', disabled: true })
 				if(!isCity) city.push({ text: '-----------', value: '', disabled: true })
 				city.push({
 					text: v.name, value: { lat: v.lat, lon: v.lon }, disabled: isCity ? false : true 
@@ -40,30 +52,67 @@ export default {
 			})
 			return city
 		},
-		...mapGetters(['GET_DAILY']),
-		cityName: function() {
-			return this.GET_DAILY ? this.GET_DAILY.name : ''
+		...mapGetters(['GET_DAILY', 'GET_COORDS']),
+		title: function() {
+			// return this.GET_DAILY ? this.GET_DAILY.name : ''
+			return '날씨정보 [' + getValue(this.GET_DAILY, 'name') + ']'
+		},
+		icon: function() {
+			// return this.GET_DAILY && this.GET_DAILY.weather ? this.GET_DAILY.weather[0].icon : null
+			return getValue(this.GET_DAILY, 'weather', 'icon')
+		},
+		temp: function() {
+			return getValue(this.GET_DAILY, 'main', 'temp')
+		},
+		date: function() {
+			return getValue(this.GET_DAILY, 'dt')
+		},
+		main: function() {
+			return getValue(this.GET_DAILY, 'weather', 'main')
+		},
+		description: function() {
+			return getValue(this.GET_DAILY, 'weather', 'description')
+		},
+		wind: function() {
+			return {
+				deg: getValue(this.GET_DAILY, 'wind', 'deg'),
+				speed: getValue(this.GET_DAILY, 'wind', 'speed')
+			}
 		}
 	},
 	watch: {
 		// 내가 변해서 다른 값들을 변하게 하려면 watch에 등록
 		// 선언되어 있는 변수의 값이 바뀌면 함수를 실행한다.
 		selected: function(v, ov) {
-			// select의 값이 변하면 날씨정보를 요청하는 로직
-			this.$store.dispatch('ACT_DAILY', v)
+			this.dispatchWeather(v) 
 		},
-		GET_DAILY: function(v, ov) {
-			console.log(v)
-		}
 	},
 	async created() {	// 자신이 실행될 때 한 번 실행한다.
-		this.$store.dispatch('ACT_DAILY', null)	// 현재위치의 날씨정보를 가져와.
+		// console.log('created')
+		// console.log(this.GET_COORDS)
+		this.dispatchWeather(this.GET_COORDS)
 		const { data } = await axios.get('/json/city.json') // 도시정보를 가져와.
 		this.city = data.city
 	},
+	updated() {
+		// console.log('updated')
+		if(this.GET_COORDS) this.selected = this.GET_COORDS
+	},
+	mounted() {
+		// console.log('mounted')
+	},
+	destroyed() {
+		// console.log('destroyed')
+	},
 	methods: {
-		onClick() {
-			this.$store.dispatch('ACT_DAILY', null)
+		onClick(e) {
+			this.selected = ''
+			this.dispatchWeather()
+		},
+		dispatchWeather(v = null) {
+			// select의 값이 변하면 날씨정보를 요청하는 로직
+			this.$store.dispatch('ACT_DAILY', v)
+			this.$store.dispatch('ACT_COORDS', v)
 		},
 	}
 }
@@ -72,14 +121,24 @@ export default {
 <style lang="scss" scoped>
 	.daily-wrapper {
 		text-align: center;
-		h2.title-wrap {
-			padding: 1em 0;
-			font-size: 2em;
-			text-align: center;
-		}
+		@include flex($ST, $CT, nowrap);
+		@include flexCol;
 		.city-select {
 			width: 50%;
 			margin: 1em auto;
+		}
+		.title-wrap {
+			font-size: 2em; margin:  1em 0 .5em 0;
+		}
+		.daily-wrap {
+			@include flex($ST,$CT);
+			@include flexCol;
+			margin-top: 1em;
+			font-size: 1.5em;
+			.icon-wrap {width:120px; margin: .5em 0;}
+			.temp-wrap {margin: .5em 0;}
+			.desc-wrap {margin: .25em 0;}
+			.wind-wrap {margin: .25em 0;}
 		}
 	}
 </style>

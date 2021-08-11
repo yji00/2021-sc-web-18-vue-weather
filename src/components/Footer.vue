@@ -1,6 +1,6 @@
 <template>
 	<footer class="footer-wrapper">
-		&copy;copyright YJI.
+		&copy;copyright booldook.
 	</footer>
 </template>
 

@@ -2,4 +2,6 @@
 export default {
 	daily: {},
 	days: {},
+	coords: null,
+	isLoading: true
 }
